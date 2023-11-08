@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/v1/books")
@@ -36,7 +37,7 @@ public class BookController {
         return new ResponseEntity<>(book,HttpStatus.FOUND);
     }
 
-    @GetMapping("/{isbn}")
+    @GetMapping("/isbn/{isbn}")
     public ResponseEntity<Book> getByIsbn(@PathVariable String isbn) {
         if (!bookService.findByIsbn(isbn).isPresent()) {
             throw new ResourceNotFoundException("There isn't book with ISBN: " + isbn);
@@ -50,5 +51,32 @@ public class BookController {
         bookService.store(book);
         return new ResponseEntity<>(book, HttpStatus.CREATED);
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Book> update(@RequestBody Book book,
+                                       @PathVariable Long id) {
+        return bookService.findById(id).map(updatedBook -> {
+            updatedBook.setISBN(book.getISBN());
+            updatedBook.setName(book.getName());
+            updatedBook.setGenre(book.getGenre());
+            updatedBook.setDescription(book.getDescription());
+            updatedBook.setAuthor(book.getAuthor());
+            bookService.store(updatedBook);
+            return new ResponseEntity<>(updatedBook, HttpStatus.OK);
+        }).orElseGet(() -> {
+            Book newBook = bookService.store(book);
+            return new ResponseEntity<>(newBook, HttpStatus.CREATED);
+        });
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Book> delete(@PathVariable("id") Long id) {
+        Optional<Book> bookToDelete = bookService.findById(id);
+        if (!bookToDelete.isPresent())
+            throw new ResourceNotFoundException("There isn't book with id : " + id);
+        bookService.delete(id);
+        return new ResponseEntity<>(bookToDelete.get(), HttpStatus.NO_CONTENT);
+    }
+
 
 }

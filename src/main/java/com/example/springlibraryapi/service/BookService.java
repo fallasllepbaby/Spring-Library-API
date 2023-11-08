@@ -33,8 +33,12 @@ public class BookService {
 
     public Book store(Book book) {
         if (bookRepository.findByISBN(book.getISBN()).isPresent()) {
-            throw new AlreadyExistException("Book with ISBN: " + book.getISBN() + "already exists");
+            throw new AlreadyExistException("Book with ISBN: " + book.getISBN() + " already exists");
         }
         return bookRepository.save(book);
+    }
+
+    public void delete(Long id) {
+        bookRepository.deleteById(id);
     }
 }
